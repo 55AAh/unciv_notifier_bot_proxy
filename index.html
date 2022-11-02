@@ -11,23 +11,31 @@
             
             let bot_token = params.get('bot_token');
             let players = JSON.parse(decodeURIComponent(params.get('players')));
-                        
-            let chat_id = players[0];
-            chat_id = 396208817;
+            let move = parseInt(params.get('move'));
+            
+            let player = players[0];
+            if (player == 0) {
+                players.push(players.shift());
+                player = players[0];
+                move++;
+            }
+            
+            player = 396208817;
             players.push(players.shift());
+            
             players = encodeURIComponent(JSON.stringify(players));
             
             document.getElementById('info').innerText = 'Sending...';
             
             let url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
             let request_json = {
-                'chat_id': chat_id,
-                'text': 'Твой ход, игроки: ' + JSON.stringify(JSON.parse(decodeURIComponent(params.get('players')))),
+                'chat_id': player,
+                'text': `Твой ход ${move}, игроки: ` + JSON.stringify(JSON.parse(decodeURIComponent(params.get('players')))),
                 'reply_markup': {
                     'inline_keyboard': [[{
                         "text": "Ход окончен",
                         "web_app": {
-                            "url": `https://55aah.github.io/unciv_notifier_bot_proxy?bot_token=${bot_token}&players=${players}`,
+                            "url": `https://55aah.github.io/unciv_notifier_bot_proxy?bot_token=${bot_token}&players=${players}&move=${move}`,
                         },
                     }]],
                 },
@@ -38,7 +46,7 @@
                 console.log(data);
                 document.getElementById('info').innerText = JSON.stringify(request_json) + '\n\n' + JSON.stringify(data);
                 if (data['ok']) {
-                    Telegram.WebApp.close();
+                    //Telegram.WebApp.close();
                 }
             }).catch((error) => {
                 console.error(error);
