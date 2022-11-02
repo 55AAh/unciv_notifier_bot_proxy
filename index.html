@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <script src="https://telegram.org/js/telegram-web-app.js"></script>
+      <script>
+        setTimeout(function() {
+            Telegram.WebApp.ready();
+            let params = new URL(window.location).searchParams;
+            
+            let bot_token = params.get('bot_token');
+            let players = JSON.parse(decodeURIComponent(params.get('players')));
+                        
+            let chat_id = players[0];
+            document.getElementById('info').innerText = 'current: ' + chat_id + ', list = ' + players;
+            chat_id = 396208817;
+            players.push(players.shift());
+            players = encodeURIComponent(JSON.stringify(players));
+            
+            setTimeout(function() {
+                //location.search=`?bot_token=${bot_token}&players=${players}`;
+                
+                let url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
+                let request_json = {
+                    'chat_id': chat_id,
+                    'text': 'Твой ход',
+                    'reply_markup': {
+                        'inline_keyboard': [[{
+                            "text": "Ход окончен",
+                            "web_app": {
+                                "url": `https://unciv_notifier_bot_proxy.onrender.com?bot_token=${bot_token}&players=${players}`,
+                            },
+                        }]],
+                    },
+                };
+                fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(request_json)}).then((response) => {
+                    return response.json();
+                }).then((data) => {
+                    console.log(data);
+                }).catch((error) => {
+                    console.error(error);
+                });
+            }, 3000);
+        }, 3000);
+      </script>
+   </head>
+   <body>
+      <p id='info'>no<p>
+   </body>
+</html>
