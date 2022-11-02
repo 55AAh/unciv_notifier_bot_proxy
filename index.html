@@ -43,7 +43,10 @@
             }).then((data) => {
                 console.log(data);
                 if (data['ok']) {
-                    Telegram.WebApp.close();
+                    document.getElementById('info').innerText = 'Отправлено!';
+                    window.setTimeout(function() {
+                        Telegram.WebApp.close();
+                    }, 1000);
                 }
                 else {
                     document.getElementById('info').innerText = JSON.stringify(request_json) + '\n\n' + JSON.stringify(data);
