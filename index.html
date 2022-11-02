@@ -11,18 +11,17 @@
             let players = JSON.parse(decodeURIComponent(params.get('players')));
                         
             let chat_id = players[0];
-            document.getElementById('info').innerText = 'current: ' + chat_id + ', list = ' + players;
             chat_id = 396208817;
             players.push(players.shift());
             players = encodeURIComponent(JSON.stringify(players));
             
-            setTimeout(function() {
-                //location.search=`?bot_token=${bot_token}&players=${players}`;
-                
+            document.getElementById('info').innerText = 'Sending...';
+            
+            setTimeout(function() {                
                 let url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
                 let request_json = {
                     'chat_id': chat_id,
-                    'text': 'Твой ход',
+                    'text': 'Твой ход ' + JSON.stringify(JSON.parse(decodeURIComponent(params.get('players')))),
                     'reply_markup': {
                         'inline_keyboard': [[{
                             "text": "Ход окончен",
@@ -36,6 +35,10 @@
                     return response.json();
                 }).then((data) => {
                     console.log(data);
+                    document.getElementById('info').innerText = JSON.stringify(request_json) + '\n\n' + JSON.stringify(data);
+                    if (data['ok']) {
+                        Telegram.WebApp.close();
+                    }
                 }).catch((error) => {
                     console.error(error);
                 });
@@ -44,6 +47,6 @@
       </script>
    </head>
    <body>
-      <p id='info'>no<p>
+      <p id='info'>Wait...<p>
    </body>
 </html>
