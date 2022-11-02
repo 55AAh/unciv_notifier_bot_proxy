@@ -28,7 +28,7 @@
             let url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
             let request_json = {
                 'chat_id': player,
-                'text': `Твой ход ${move}, игроки: ` + JSON.stringify(JSON.parse(decodeURIComponent(params.get('players')))),
+                'text': `Твой ход ${move}`,
                 'reply_markup': {
                     'inline_keyboard': [[{
                         "text": "Ход окончен",
