@@ -20,11 +20,10 @@
                 move++;
             }
             
-            player = 396208817;
-            players.push(players.shift());
-            
+            players.push(players.shift());            
             players = encodeURIComponent(JSON.stringify(players));
             
+            player = 396208817;
             document.getElementById('info').innerText = 'Sending...';
             
             let url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
