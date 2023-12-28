@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Unciv Match</title>
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <style>
+  #sortable { list-style-type: none; margin: 0; padding: 0; width: 60%; }
+  #sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.4em; height: 18px; }
+  #sortable li span { position: absolute; margin-left: -1.3em; }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+  <script>
+  $( function() {
+    $("#sortable").sortable();
+  } );
+  
+  var bot_token = '5786194425:AAEXNBKd2ENWt8rmGbZjWN2MORWVzJvrSD0';
+  var last_update_id = -1;
+  var old = true;
+  
+  function get_players() {
+    var players = [];
+    $("#sortable").children('li').each(function () {
+        players.push($(this).text());
+    });
+    return players;
+  }
+  
+  function handle_updates() {
+    let url = `https://api.telegram.org/bot${bot_token}/getUpdates?offset=${last_update_id + 1}`;
+    fetch(url).then((response) => {
+        return response.json();
+    }).then((data) => {
+        if (data['ok']) {
+            let updates = data['result'];
+            console.log(`Got ${updates.length} updates`); 
+            
+            for (let update of updates) {
+                last_update_id = parseInt(update['update_id']);
+                
+                if (old) {
+                    continue;
+                }
+                
+                let message = update['message'];
+                let chat_id = message['chat']['id'];
+                console.log(message);
+                
+                if (chat_id > 0) {
+                    let user = message['from'];
+                    let url = `https://api.telegram.org/bot${bot_token}/sendMessage?chat_id=${chat_id}&parse_mode=HTML&reply_to_message_id=${message['message_id']}&text=`;
+                    let text = '';
+                    let player = `${chat_id} @${user['username']} (${user['first_name']} ${user['last_name']})`;
+                    if (!get_players().includes(player)) {
+                        $("#sortable").append('<li class="ui-state-default">' + player + '</li>');
+                        
+                        if ($('#sortable').children().length >= 2) {
+                            $("#start_game_button").removeAttr('disabled');
+                        }
+                        
+                        text += 'Great, you are added to the list!';
+                    }
+                    else {
+                        text += 'You are already in the list!';
+                    }
+                    
+                    text += '\nPlease wait for the host to start the session.\n\nParticipants:';
+                    for (player of get_players()) {
+                        text += `\n${player}`;
+                    }
+                    
+                    fetch(url + encodeURIComponent(text)).then((response) => {
+                        return response.json();
+                    }).then((data) => {
+                        if (!data['ok']) {
+                            console.log('data');
+                        }
+                    });
+                }
+            }
+            
+            if (old) {
+                if (updates.length == 0) {
+                    console.log('All old updates ignored');
+                    $("#state_text").html("To join the session, each participant needs to message " +
+                                          "<a href='https://telegram.me/unciv_notifier_bot?start=true' target='_blank'>this bot</a>." +
+                                          "<br><br>(To change the order, drag entries with mouse)");
+                    old = false;
+                }
+            }
+        }
+        else {
+            console.error(data);
+        }
+    }).catch((error) => {
+        console.error(error);
+    });
+  };
+  
+  var update_players_interval = window.setInterval(handle_updates, 3000);
+  $(document).ready(handle_updates);
+  
+  function start_game() {
+    clearInterval(update_players_interval);
+    $("#sortable").sortable('disable');
+    $("#state_text").text('Sending button to the next participant...');
+    
+    let players = get_players();
+    let first_player = players[0];
+    console.log(players);
+    players.push(0);
+    players.push(players.shift());
+    players = encodeURIComponent(JSON.stringify(players));
+    console.log('Sending...');
+    
+    let url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
+        let request_json = {
+            'chat_id': first_player,
+            'text': 'Is it your turn! #1',
+            'reply_markup': {
+                'inline_keyboard': [[{
+                    "text": "I am done",
+                    "web_app": {
+                        "url": `https://55aah.github.io/unciv_notifier_bot_proxy/webapp?bot_token=${bot_token}&players=${players}&move=1`,
+                    },
+                }]],
+            },
+        };
+        fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(request_json)}).then((response) => {
+            return response.json();
+        }).then((data) => {
+            console.log(data);
+            if (data['ok']) {
+                $("#state_text").text('A button was sent to the first participant.');
+            }
+        }).catch((error) => {
+            console.error(error);
+    });
+  }
+  
+  </script>
+</head>
+<body>
+
+<p id="state_text">Loading...<p>
+
+<ul id="sortable">
+</ul>
+
+<br>
+<button id="start_game_button" onClick=start_game() disabled>Start session</button>
+
+</body>
+</html>

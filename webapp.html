@@ -28,12 +28,12 @@
             let url = `https://api.telegram.org/bot${bot_token}/sendMessage`;
             let request_json = {
                 'chat_id': player,
-                'text': `Твой ход ${move}`,
+                'text': `Is it your turn! #${move}`,
                 'reply_markup': {
                     'inline_keyboard': [[{
-                        "text": "Ход окончен",
+                        "text": "I am done",
                         "web_app": {
-                            "url": `https://55aah.github.io/unciv_notifier_bot_proxy?bot_token=${bot_token}&players=${players}&move=${move}`,
+                            "url": `https://55aah.github.io/unciv_notifier_bot_proxy/webapp?bot_token=${bot_token}&players=${players}&move=${move}`,
                         },
                     }]],
                 },
@@ -43,7 +43,7 @@
             }).then((data) => {
                 console.log(data);
                 if (data['ok']) {
-                    document.getElementById('info').innerText = 'Отправлено!';
+                    document.getElementById('info').innerText = 'Sent!';
                     window.setTimeout(function() {
                         Telegram.WebApp.close();
                     }, 1000);
